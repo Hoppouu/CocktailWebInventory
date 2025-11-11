@@ -152,6 +152,8 @@ html.light .nav{background:rgba(255,255,255,.7);border-bottom-color:var(--border
 html.light .link.active{background:#f3f4f6;border-color:var(--border)}
 html.light .input{background:#ffffff;border-color:var(--border);color:var(--text)}
 html.light .chip{background:#ffffff;border-color:var(--border);color:var(--text)}
+html.light .btn{background:#f3f4f6;color:var(--text);border-color:var(--border)}
+html.light .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#0b0d12}
 html.light .badge{background:#f9fafb;border-color:var(--border);color:#4b5563}
 html.light .icon-btn{border-color:var(--border);color:#6b7280}
 html.light .ingredient{background:#ffffff;border-color:var(--border)}
