@@ -1,7 +1,6 @@
 import { Api } from '../services/api.js'
-import { categoryOfIng } from '../data/sample.js'
 import { el } from '../components/common.js'
-import { state, persist } from '../state.js'
+import { state, storage } from '../state.js'
 import { updateCounts, renderSelectedSummary, renderIngredients as renderIngredientsInRecommend } from './recommend.js'
 
 export async function renderIngCategoryChips(rootId, isManager=false, taxonomy=null){
@@ -29,31 +28,24 @@ export async function renderIngredientGroups(rootId, items){
   const root = document.getElementById(rootId)
   if (!root) return
   root.innerHTML = ''
-  const tax = await Api.taxonomy()
-  const cats = (tax.ingredientCategories||[]).filter(c=>c.id!=='all')
-  cats.forEach(cat=>{
-    const list = items.filter(n=> n && typeof n==='string' && categoryOfIng(n)===cat.id)
-    if (!list.length) return
-    const group = el('div',{class:'group'},
-      el('div',{class:'group__title'}, cat.label),
-      el('div',{class:'ingredients'})
+  if (!items.length){
+    root.appendChild(el('div',{class:'empty card'},'표시할 재료가 없습니다.'))
+    return
+  }
+  const grid = el('div',{class:'ingredients'})
+  items.forEach(name=>{
+    const checked = state.have.has(name)
+    const label = el('label',{class:`ingredient ${checked?'active':''}`},
+      el('input',{type:'checkbox',checked:checked?true:undefined, onchange:e=>{
+        storage.toggleInventory(name, e.target.checked)
+        label.classList.toggle('active', e.target.checked); updateCounts(); renderSelectedSummary()
+      }}),
+      el('span',{class:'box'}),
+      el('span',{class:'text'}, name)
     )
-    const grid = group.querySelector('.ingredients')
-    list.forEach(name=>{
-      const checked = state.have.has(name)
-      const label = el('label',{class:`ingredient ${checked?'active':''}`},
-        el('input',{type:'checkbox',checked:checked?true:undefined, onchange:async e=>{
-          if (e.target.checked) { state.have.add(name); await Api.patchInventory([name], []) }
-          else { state.have.delete(name); await Api.patchInventory([], [name]) }
-          persist.saveHave(); label.classList.toggle('active', e.target.checked); updateCounts(); renderSelectedSummary()
-        }}),
-        el('span',{class:'box'}),
-        el('span',{class:'text'}, name)
-      )
-      grid.appendChild(label)
-    })
-    root.appendChild(group)
+    grid.appendChild(label)
   })
+  root.appendChild(grid)
 }
 
 export async function renderIngredientsManager(filterText=''){
@@ -70,7 +62,8 @@ export function bindIngredientsOnce(){
   f.addEventListener('input', e=> renderIngredientsManager(e.target.value))
   document.getElementById('ingSelectAll').addEventListener('click', async ()=>{
     const items = (await Api.ingredients()).items
-    items.forEach(i=>state.have.add(i)); persist.saveHave(); await Api.replaceInventory([...state.have]); renderIngredientsManager(f.value||''); updateCounts()
+    storage.setInventory(items)
+    renderIngredientsManager(f.value||''); updateCounts()
   })
-  document.getElementById('ingClearAll').addEventListener('click', async ()=>{ state.have.clear(); persist.saveHave(); await Api.replaceInventory([]); renderIngredientsManager(f.value||''); updateCounts() })
+  document.getElementById('ingClearAll').addEventListener('click', ()=>{ storage.clearInventory(); renderIngredientsManager(f.value||''); updateCounts() })
 }

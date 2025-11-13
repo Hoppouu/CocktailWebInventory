@@ -136,6 +136,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:
 .ing-link:hover{color:#9edbff;text-decoration:underline}
 .ing-link.active{font-weight:600;color:#cfefff;text-decoration:underline}
 
+.pager{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.pager__btn{border:none;border-radius:999px;padding:4px 12px;font-size:12px;background:var(--panel);color:var(--muted);cursor:pointer;transition:background .2s ease,color .2s ease}
+.pager__btn.active{background:var(--primary);color:#fff;font-weight:600}
+.pager__btn:hover:not(.active){background:var(--surface);color:var(--text)}
+
 /* Modal */
 .modal{position:fixed;inset:0;display:grid;place-items:center;z-index:99}
 .modal[hidden]{display:none}

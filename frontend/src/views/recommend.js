@@ -1,7 +1,8 @@
 import { Api } from '../services/api.js'
 import { el, labelIng } from '../components/common.js'
 import { ResultCard } from '../components/resultCard.js'
-import { state, persist } from '../state.js'
+import { renderPaginatedList } from '../components/pagination.js'
+import { state, storage } from '../state.js'
 
 let taxonomyCache = null
 const ensureTaxonomy = async (tax)=>{
@@ -74,14 +75,12 @@ export function renderSelectedSummary(tax){
   })
   ;[...state.have].forEach(name=>{
     root.appendChild(
-      el('span',{class:'chip removable', onclick:async ()=>{
-        state.have.delete(name)
-        persist.saveHave()
+      el('span',{class:'chip removable', onclick:()=>{
+        storage.toggleInventory(name, false)
         updateCounts()
         renderSelectedSummary()
         renderIngredients()
         recommend()
-        await Api.patchInventory([], [name])
       }}, labelIng(name), el('span',{class:'x'},'×'))
     )
   })
@@ -176,10 +175,8 @@ export async function renderIngredients(taxonomy){
     list.forEach(name=>{
       const checked = state.have.has(name)
       const label = el('label',{class:`ingredient ${checked?'active':''}`},
-        el('input',{type:'checkbox',checked:checked?true:undefined, onchange:async e=>{
-          if (e.target.checked) { state.have.add(name); await Api.patchInventory([name], []) }
-          else { state.have.delete(name); await Api.patchInventory([], [name]) }
-          persist.saveHave()
+        el('input',{type:'checkbox',checked:checked?true:undefined, onchange:e=>{
+          storage.toggleInventory(name, e.target.checked)
           label.classList.toggle('active', e.target.checked)
           updateCounts()
           renderSelectedSummary()
@@ -203,22 +200,31 @@ export async function recommend(){
     ingredients: [...state.have],
     alcoholic: state.alcoholic
   })
+  renderRecommendationResults(res.items || [], true)
+}
+
+function renderRecommendationResults(items, resetPage = false){
   const root = document.getElementById('results')
   if (!root) return
-  root.innerHTML = ''
-  if (!res.items || !res.items.length){
-    root.appendChild(el('div',{class:'empty card'},'조건에 맞는 추천이 없습니다.'))
-    return
-  }
-  const favs = new Set(state.favorites)
-  res.items.forEach(({ cocktail, score })=>{
-    const stars = Math.max(1, Math.min(5, Math.round((score + 3) / 2)))
-    root.appendChild(ResultCard({ cocktail, stars, isFavorite: favs.has(cocktail.id), onFavorite: async (id)=>{
-      const out = await Api.toggleFavorite(id)
-      state.favorites = new Set(out.items)
-      persist.saveFav()
-      recommend()
-    }}))
+  renderPaginatedList({
+    container: root,
+    items,
+    pageKey: 'recommend',
+    pageSize: 9,
+    emptyMessage: '조건에 맞는 추천이 없습니다.',
+    resetPage,
+    renderItem: ({ cocktail, score })=>{
+      const stars = Math.max(1, Math.min(5, Math.round((score + 3) / 2)))
+      return ResultCard({
+        cocktail,
+        stars,
+        isFavorite: state.favorites.has(cocktail.id),
+        onFavorite: (id)=>{
+          storage.toggleFavorite(id)
+          renderRecommendationResults(items)
+        }
+      })
+    }
   })
 }
 
@@ -233,9 +239,7 @@ export function bindRecommendOnce(){
     state.glasses.clear()
     state.categories.clear()
     state.alcoholic = null
-    state.have.clear()
-    persist.saveHave()
-    await Api.replaceInventory([])
+    storage.clearInventory()
     document.getElementById('searchInput').value=''
     await renderFilters()
     await renderIngredients()

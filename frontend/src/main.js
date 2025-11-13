@@ -2,9 +2,8 @@ import { bindModalGlobal } from './components/modal.js'
 import { bindRecommendOnce, renderFilters, renderIngredients, recommend } from './views/recommend.js'
 import { bindIngredientsOnce, renderIngCategoryChips, renderIngredientsManager } from './views/ingredients.js'
 import { bindCocktailsOnce, renderCards } from './views/cocktails.js'
-import { renderFavorites } from './views/favorites.js'
 import { Api } from './services/api.js'
-import { state, syncFromServer } from './state.js'
+import { state } from './state.js'
 
 const DEFAULT_RECOMMEND_SECTION = 'filters'
 const RECOMMEND_SECTIONS = new Set(['filters','ingredients','results'])
@@ -12,8 +11,7 @@ const DEFAULT_HASH = '#/recommend/filters'
 const VIEW_PROMPTS = {
   'recommend': '추천 화면 활성화, 아래로 스크롤 해보세요.',
   'ingredients': '재료 관리 화면 활성화, 아래로 스크롤 해보세요.',
-  'cocktails': '칵테일 목록 화면 활성화, 아래로 스크롤 해보세요.',
-  'favorites': '즐겨찾기 화면 활성화, 아래로 스크롤 해보세요.'
+  'cocktails': '칵테일 목록 화면 활성화, 아래로 스크롤 해보세요.'
 }
 let recommendReady = false
 let pressStatesBound = false
@@ -165,12 +163,7 @@ async function route(hash){
       showView('view-cocktails')
       showPrompt('cocktails')
       bindCocktailsOnce()
-      renderCards(document.getElementById('cocktailList'), (await Api.cocktails()).items)
-      break
-    case 'favorites':
-      showView('view-favorites')
-      showPrompt('favorites')
-      await renderFavorites()
+      renderCards(document.getElementById('cocktailList'), (await Api.cocktails()).items, true)
       break
     default:
       location.hash = DEFAULT_HASH
@@ -182,6 +175,5 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   bindModalGlobal()
   bindPressStates()
   bindNavLinks()
-  await syncFromServer()
   route(location.hash||DEFAULT_HASH)
 })
