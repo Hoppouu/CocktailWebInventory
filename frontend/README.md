@@ -136,9 +136,9 @@ Response 예시:
     {
       "cocktail": {
         "id": "mojito",
-        "name": "모히토 (Mojito)",
+        "name": "모히토 (Mojito)", 
         "base": "rum",
-        "tastes": ["fresh", "sweet"],
+        "tastes": ["fresh", "sweet"],  
         "ingredients": ["rum", "lime", "mint", "sugar", "soda"]
       },
       "score": 6.5
