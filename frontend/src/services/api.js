@@ -338,7 +338,13 @@ const matchCategoryId = (value = '') => {
   return 'other'
 }
 
-const matchAlcoholId = (value = '') => (slugify(value).includes('non') ? 'non-alcoholic' : 'alcoholic')
+const matchAlcoholId = (value = '') => {
+  const lowerValue = value.toLowerCase();
+  if (lowerValue.includes('무알코올')) {
+    return 'non-alcoholic';
+  }
+  return 'alcoholic';
+}
 
 function normalizeCocktailDbDrink(drink){
   if (!drink) return null

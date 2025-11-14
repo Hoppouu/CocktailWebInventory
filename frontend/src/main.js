@@ -172,6 +172,19 @@ function bindNavLinks(){
       }
     })
   })
+  const brand = document.querySelector('.brand')
+  if (brand){
+    brand.addEventListener('click', ()=>{
+      manualDeviceSelection = false
+      if ('caches' in window){
+        caches.keys().then(keys=> Promise.all(keys.map(key => caches.delete(key)))).finally(()=>{
+          window.location.reload(true)
+        })
+      } else {
+        window.location.reload(true)
+      }
+    })
+  }
 }
 
 async function route(hash){
